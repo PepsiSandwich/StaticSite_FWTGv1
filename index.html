@@ -3,208 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Масштабируемая доска</title>
+    <title>Arch TG Портфолио</title>
     <style>
+        /* Обнуляем стандартные отступы */
         body, html {
             margin: 0;
             padding: 0;
             height: 100%;
-            overflow: hidden;
-        }
-
-        .board-container {
-            width: 100vw;
-            height: 100vh;
-            overflow: hidden;
-            position: relative;
-            touch-action: none; /* Отключаем встроенные жесты браузера */
-        }
-
-        .board {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 200%;
-            height: 200%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             background-color: #f0f0f0;
-            transform-origin: center center;
-            transition: transform 0.1s ease;
+            font-family: Arial, sans-serif;
         }
 
-        .content-item {
-            position: absolute;
-            font-size: 1rem;
-            line-height: 1.5;
-        }
-
-        .text {
-            font-size: 20px;
+        /* Стиль для текста */
+        h1 {
+            font-size: 5vw; /* Размер шрифта адаптируется к ширине экрана */
             color: #333;
-        }
-
-        .image {
-            width: 200px;
-            height: auto;
+            text-align: center;
         }
     </style>
 </head>
 <body>
-
-<div class="board-container">
-    <div class="board">
-        <div class="content-item text" style="top: 10%; left: 10%;">Это пример текста на доске.</div>
-        <div class="content-item image" style="top: 30%; left: 30%;">
-            <img src="https://via.placeholder.com/150" alt="Пример изображения">
-        </div>
-        <div class="content-item text" style="top: 50%; left: 50%;">
-            <a href="https://example.com" target="_blank">Перейти на Example.com</a>
-        </div>
-    </div>
-</div>
-
-<script>
-    let zoomLevel = 1;
-    const board = document.querySelector('.board');
-    const boardContainer = document.querySelector('.board-container');
-
-    let isTouch = false;
-    let initialDistance = 0;
-    let initialZoom = 1;
-    let initialX = 0, initialY = 0;
-    let scaleOriginX = 0, scaleOriginY = 0;
-
-    // Для ПК (колесо мыши)
-    boardContainer.addEventListener('wheel', function (event) {
-        event.preventDefault(); // Останавливаем прокрутку страницы
-        const rect = boardContainer.getBoundingClientRect();
-        const offsetX = event.clientX - rect.left;
-        const offsetY = event.clientY - rect.top;
-
-        // Фиксируем текущую точку и масштаб
-        if (event.deltaY > 0) {
-            zoomLevel -= 0.05;
-        } else {
-            zoomLevel += 0.05;
-        }
-
-        zoomLevel = Math.min(Math.max(zoomLevel, 0.5), 2); // Ограничиваем масштаб от 0.5 до 2
-
-        // Перемещение доски относительно фиксированной точки фокуса
-        const scaleRatio = zoomLevel / initialZoom;
-        const newLeft = (board.offsetLeft - offsetX) * scaleRatio + offsetX;
-        const newTop = (board.offsetTop - offsetY) * scaleRatio + offsetY;
-
-        board.style.transform = `scale(${zoomLevel})`;
-        board.style.left = `${newLeft}px`;
-        board.style.top = `${newTop}px`;
-
-        initialZoom = zoomLevel;
-    });
-
-    // Для мобильных устройств (жесты на экране)
-    boardContainer.addEventListener('touchstart', function (e) {
-        if (e.touches.length == 2) {
-            // Фиксируем начальное расстояние между пальцами
-            initialDistance = Math.hypot(
-                e.touches[0].pageX - e.touches[1].pageX,
-                e.touches[0].pageY - e.touches[1].pageY
-            );
-            initialZoom = zoomLevel;
-
-            // Фиксируем точку между пальцами
-            initialX = (e.touches[0].pageX + e.touches[1].pageX) / 2;
-            initialY = (e.touches[0].pageY + e.touches[1].pageY) / 2;
-
-            scaleOriginX = initialX;
-            scaleOriginY = initialY;
-        }
-    });
-
-    boardContainer.addEventListener('touchmove', function (e) {
-        if (e.touches.length == 2) {
-            const newDistance = Math.hypot(
-                e.touches[0].pageX - e.touches[1].pageX,
-                e.touches[0].pageY - e.touches[1].pageY
-            );
-            const scaleFactor = newDistance / initialDistance;
-            zoomLevel = initialZoom * scaleFactor;
-
-            zoomLevel = Math.min(Math.max(zoomLevel, 0.5), 2); // Ограничиваем масштаб от 0.5 до 2
-
-            const centerX = (e.touches[0].pageX + e.touches[1].pageX) / 2;
-            const centerY = (e.touches[0].pageY + e.touches[1].pageY) / 2;
-
-            const scaleRatio = zoomLevel / initialZoom;
-            const offsetX = centerX - scaleOriginX;
-            const offsetY = centerY - scaleOriginY;
-
-            board.style.transform = `scale(${zoomLevel})`;
-            board.style.left = `${board.offsetLeft + offsetX}px`;
-            board.style.top = `${board.offsetTop + offsetY}px`;
-
-            scaleOriginX = centerX;
-            scaleOriginY = centerY;
-        }
-    });
-
-    // Обработчик для перетаскивания доски на ПК
-    let isMouseDown = false;
-    let startX, startY;
-
-    boardContainer.addEventListener('mousedown', function (e) {
-        isMouseDown = true;
-        startX = e.pageX - board.offsetLeft;
-        startY = e.pageY - board.offsetTop;
-        boardContainer.style.cursor = 'grabbing';
-    });
-
-    boardContainer.addEventListener('mousemove', function (e) {
-        if (!isMouseDown) return;
-        const x = e.pageX - startX;
-        const y = e.pageY - startY;
-        board.style.left = `${x}px`;
-        board.style.top = `${y}px`;
-    });
-
-    boardContainer.addEventListener('mouseup', function () {
-        isMouseDown = false;
-        boardContainer.style.cursor = 'grab';
-    });
-
-    boardContainer.addEventListener('mouseleave', function () {
-        isMouseDown = false;
-        boardContainer.style.cursor = 'grab';
-    });
-
-    // Обработчик для перетаскивания доски на мобильных устройствах
-    let isTouchMove = false;
-    let touchStartX, touchStartY;
-
-    boardContainer.addEventListener('touchstart', function (e) {
-        if (e.touches.length === 1) {
-            isTouchMove = true;
-            touchStartX = e.touches[0].pageX - board.offsetLeft;
-            touchStartY = e.touches[0].pageY - board.offsetTop;
-        }
-    });
-
-    boardContainer.addEventListener('touchmove', function (e) {
-        if (!isTouchMove) return;
-        const x = e.touches[0].pageX - touchStartX;
-        const y = e.touches[0].pageY - touchStartY;
-        board.style.left = `${x}px`;
-        board.style.top = `${y}px`;
-    });
-
-    boardContainer.addEventListener('touchend', function () {
-        isTouchMove = false;
-    });
-
-    boardContainer.addEventListener('touchcancel', function () {
-        isTouchMove = false;
-    });
-
-</script>
-
+    <h1>Сосал?</h1>
 </body>
 </html>

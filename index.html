@@ -67,6 +67,7 @@
     const board = document.querySelector('.board');
     const boardContainer = document.querySelector('.board-container');
 
+    let isTouch = false;
     let initialDistance = 0;
     let initialZoom = 1;
     let initialX = 0, initialY = 0;
@@ -79,7 +80,7 @@
         const offsetX = event.clientX - rect.left;
         const offsetY = event.clientY - rect.top;
 
-        // Если событие колесика - фиксируем точку фокуса
+        // Фиксируем текущую точку и масштаб
         if (event.deltaY > 0) {
             zoomLevel -= 0.05;
         } else {
@@ -103,12 +104,14 @@
     // Для мобильных устройств (жесты на экране)
     boardContainer.addEventListener('touchstart', function (e) {
         if (e.touches.length == 2) {
+            // Фиксируем начальное расстояние между пальцами
             initialDistance = Math.hypot(
                 e.touches[0].pageX - e.touches[1].pageX,
                 e.touches[0].pageY - e.touches[1].pageY
             );
             initialZoom = zoomLevel;
 
+            // Фиксируем точку между пальцами
             initialX = (e.touches[0].pageX + e.touches[1].pageX) / 2;
             initialY = (e.touches[0].pageY + e.touches[1].pageY) / 2;
 

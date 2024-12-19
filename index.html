@@ -3,29 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arch TG Портфолио</title>
+    <title>Занимает весь экран с сдвигом</title>
     <style>
-        /* Обнуляем стандартные отступы */
+        /* Сброс стилей для body и html */
         body, html {
             margin: 0;
             padding: 0;
-            height: 100%;
-            display: flex;
+            height: 100%; /* Заполняем весь экран */
+            width: 100%;  /* Заполняем всю ширину */
+            display: flex; /* Используем флекс-контейнер для центрирования */
             justify-content: center;
             align-items: center;
-            background-color: #f0f0f0;
             font-family: Arial, sans-serif;
         }
 
-        /* Стиль для текста */
-        h1 {
-            font-size: 5vw; /* Размер шрифта адаптируется к ширине экрана */
-            color: #333;
-            text-align: center;
+        /* Контейнер, который занимает весь экран */
+        .iframe-container {
+            width: 100%;  /* Заполняем всю ширину */
+            height: 100vh; /* Заполняем всю высоту экрана */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden; /* Убираем лишнюю прокрутку */
+        }
+
+        /* iframe, которое заполняет контейнер */
+        iframe {
+            width: 100%;   /* Заполняем всю ширину контейнера */
+            height: 100%;  /* Заполняем всю высоту контейнера */
+            border: none;  /* Убираем рамку */
+            display: block; /* Убираем возможные отступы */
+            margin-left: -50px; /* Сдвигаем содержимое iframe влево */
         }
     </style>
 </head>
 <body>
-    <h1>Сосал?</h1>
+    <div class="iframe-container">
+        <iframe 
+            src="https://view.ziteboard.com/shared/36605882643712?backgroundcolor=FFFFFF" 
+            allowfullscreen>
+        </iframe>
+    </div>
 </body>
 </html>

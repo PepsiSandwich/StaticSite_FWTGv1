@@ -3,45 +3,194 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Занимает весь экран</title>
+    <title>Моя доска</title>
     <style>
-        /* Сброс стилей для body и html */
         body, html {
             margin: 0;
             padding: 0;
-            height: 100%; /* Заполняем весь экран */
-            width: 100%;  /* Заполняем всю ширину */
-            display: flex; /* Используем флекс-контейнер для центрирования */
-            justify-content: center;
-            align-items: center;
-            font-family: Arial, sans-serif;
+            height: 100%;
+            overflow: hidden;
         }
 
-        /* Контейнер, который занимает весь экран */
-        .iframe-container {
-            width: 100%;  /* Заполняем всю ширину */
-            height: 100vh; /* Заполняем всю высоту экрана */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden; /* Убираем лишнюю прокрутку */
+        /* Контейнер для доски, который позволяет прокручивать */
+        .board-container {
+            width: 100vw;       /* Ширина на весь экран */
+            height: 100vh;      /* Высота на весь экран */
+            overflow: hidden;   /* Скроллинг отключен для контейнера */
+            position: relative;
         }
 
-        /* iframe, которое заполняет контейнер */
-        iframe {
-            width: 100%;   /* Заполняем всю ширину контейнера */
-            height: 100%;  /* Заполняем всю высоту контейнера */
-            border: none;  /* Убираем рамку */
-            display: block; /* Убираем возможные отступы */
+        /* Доска, на которой находятся все элементы */
+        .board {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 200%;    /* Увеличиваем ширину доски для прокрутки */
+            height: 200%;   /* Увеличиваем высоту доски */
+            background-color: white;
+            transform-origin: top left;
+            transition: transform 0.2s ease; /* Плавное изменение масштаба */
         }
+
+        /* Элементы на доске (текст, изображения, ссылки) */
+        .content-item {
+            position: absolute;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        /* Пример стилей для текста */
+        .text {
+            font-size: 20px;
+            color: #333;
+        }
+
+        /* Пример стилей для изображений */
+        .image {
+            width: 200px;
+            height: auto;
+        }
+
+        /* Адаптация для мобильных устройств */
+        @media (max-width: 600px) {
+            .content-item {
+                font-size: 18px;
+            }
+        }
+
     </style>
 </head>
 <body>
-    <div class="iframe-container">
-        <iframe 
-            src="https://view.ziteboard.com/shared/36605882643712?backgroundcolor=FFFFFF" 
-            allowfullscreen>
-        </iframe>
+
+    <div class="board-container">
+        <div class="board">
+            <!-- Пример текста -->
+            <div class="content-item text" style="top: 10%; left: 10%;">Это пример текста на доске.</div>
+            <!-- Пример изображения -->
+            <div class="content-item image" style="top: 30%; left: 30%;">
+                <img src="https://via.placeholder.com/150" alt="Пример изображения">
+            </div>
+            <!-- Пример ссылки -->
+            <div class="content-item text" style="top: 50%; left: 50%;">
+                <a href="https://example.com" target="_blank">Перейти на Example.com</a>
+            </div>
+        </div>
     </div>
+
+    <script>
+        // Масштабирование доски с колесиком мыши (для ПК)
+        let zoomLevel = 1;
+        const board = document.querySelector('.board');
+        const boardContainer = document.querySelector('.board-container');
+
+        // Масштабирование для мобильных устройств (щипок)
+        let initialDistance = 0;
+        let initialZoom = 1;
+
+        // Слушаем событие колесика мыши для масштабирования (ПК)
+        boardContainer.addEventListener('wheel', function (event) {
+            // Уменьшаем или увеличиваем масштаб с колесиком
+            if (event.deltaY > 0) {
+                zoomLevel -= 0.05;
+            } else {
+                zoomLevel += 0.05;
+            }
+
+            // Ограничиваем минимальный и максимальный уровень масштаба
+            zoomLevel = Math.min(Math.max(zoomLevel, 0.5), 2);
+
+            // Применяем масштаб
+            board.style.transform = `scale(${zoomLevel})`;
+        });
+
+        // Масштабирование для мобильных устройств с жестом "щипка"
+        boardContainer.addEventListener('touchstart', function (e) {
+            if (e.touches.length == 2) {
+                // Получаем расстояние между двумя пальцами
+                initialDistance = Math.hypot(
+                    e.touches[0].pageX - e.touches[1].pageX,
+                    e.touches[0].pageY - e.touches[1].pageY
+                );
+                initialZoom = zoomLevel;
+            }
+        });
+
+        boardContainer.addEventListener('touchmove', function (e) {
+            if (e.touches.length == 2) {
+                // Находим новое расстояние между пальцами
+                const newDistance = Math.hypot(
+                    e.touches[0].pageX - e.touches[1].pageX,
+                    e.touches[0].pageY - e.touches[1].pageY
+                );
+                const scaleFactor = newDistance / initialDistance;
+                zoomLevel = initialZoom * scaleFactor;
+
+                // Ограничиваем масштаб
+                zoomLevel = Math.min(Math.max(zoomLevel, 0.5), 2);
+
+                // Применяем новый масштаб
+                board.style.transform = `scale(${zoomLevel})`;
+            }
+        });
+
+        // Перетаскивание доски для прокрутки
+        let isMouseDown = false;
+        let startX, startY;
+
+        // Перетаскивание с помощью мыши (для ПК)
+        boardContainer.addEventListener('mousedown', function (e) {
+            isMouseDown = true;
+            startX = e.pageX - board.offsetLeft;
+            startY = e.pageY - board.offsetTop;
+            boardContainer.style.cursor = 'grabbing';
+        });
+
+        boardContainer.addEventListener('mousemove', function (e) {
+            if (!isMouseDown) return;
+            const x = e.pageX - startX;
+            const y = e.pageY - startY;
+            board.style.left = `${x}px`;
+            board.style.top = `${y}px`;
+        });
+
+        boardContainer.addEventListener('mouseup', function () {
+            isMouseDown = false;
+            boardContainer.style.cursor = 'grab';
+        });
+
+        boardContainer.addEventListener('mouseleave', function () {
+            isMouseDown = false;
+            boardContainer.style.cursor = 'grab';
+        });
+
+        // Перетаскивание с помощью пальцев на мобильных устройствах
+        let isTouchMove = false;
+        let touchStartX, touchStartY;
+
+        boardContainer.addEventListener('touchstart', function (e) {
+            if (e.touches.length === 1) {
+                isTouchMove = true;
+                touchStartX = e.touches[0].pageX - board.offsetLeft;
+                touchStartY = e.touches[0].pageY - board.offsetTop;
+            }
+        });
+
+        boardContainer.addEventListener('touchmove', function (e) {
+            if (!isTouchMove) return;
+            const x = e.touches[0].pageX - touchStartX;
+            const y = e.touches[0].pageY - touchStartY;
+            board.style.left = `${x}px`;
+            board.style.top = `${y}px`;
+        });
+
+        boardContainer.addEventListener('touchend', function () {
+            isTouchMove = false;
+        });
+
+        boardContainer.addEventListener('touchcancel', function () {
+            isTouchMove = false;
+        });
+    </script>
+
 </body>
 </html>

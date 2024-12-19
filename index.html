@@ -12,46 +12,41 @@
             overflow: hidden;
         }
 
-        /* Контейнер для доски, который позволяет прокручивать */
         .board-container {
-            width: 100vw;       /* Ширина на весь экран */
-            height: 100vh;      /* Высота на весь экран */
-            overflow: hidden;   /* Скроллинг отключен для контейнера */
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
             position: relative;
+            touch-action: none; /* Отключаем встроенное масштабирование и прокрутку на мобильных */
         }
 
-        /* Доска, на которой находятся все элементы */
         .board {
             position: absolute;
             top: 0;
             left: 0;
-            width: 200%;    /* Увеличиваем ширину доски для прокрутки */
-            height: 200%;   /* Увеличиваем высоту доски */
+            width: 200%;
+            height: 200%;
             background-color: white;
-            transform-origin: top left;
-            transition: transform 0.2s ease; /* Плавное изменение масштаба */
+            transform-origin: center center;
+            transition: transform 0.1s ease;
         }
 
-        /* Элементы на доске (текст, изображения, ссылки) */
         .content-item {
             position: absolute;
             font-size: 1rem;
             line-height: 1.5;
         }
 
-        /* Пример стилей для текста */
         .text {
             font-size: 20px;
             color: #333;
         }
 
-        /* Пример стилей для изображений */
         .image {
             width: 200px;
             height: auto;
         }
 
-        /* Адаптация для мобильных устройств */
         @media (max-width: 600px) {
             .content-item {
                 font-size: 18px;
@@ -62,135 +57,146 @@
 </head>
 <body>
 
-    <div class="board-container">
-        <div class="board">
-            <!-- Пример текста -->
-            <div class="content-item text" style="top: 10%; left: 10%;">Это пример текста на доске.</div>
-            <!-- Пример изображения -->
-            <div class="content-item image" style="top: 30%; left: 30%;">
-                <img src="https://via.placeholder.com/150" alt="Пример изображения">
-            </div>
-            <!-- Пример ссылки -->
-            <div class="content-item text" style="top: 50%; left: 50%;">
-                <a href="https://example.com" target="_blank">Перейти на Example.com</a>
-            </div>
+<div class="board-container">
+    <div class="board">
+        <div class="content-item text" style="top: 10%; left: 10%;">Это пример текста на доске.</div>
+        <div class="content-item image" style="top: 30%; left: 30%;">
+            <img src="https://via.placeholder.com/150" alt="Пример изображения">
+        </div>
+        <div class="content-item text" style="top: 50%; left: 50%;">
+            <a href="https://example.com" target="_blank">Перейти на Example.com</a>
         </div>
     </div>
+</div>
 
-    <script>
-        // Масштабирование доски с колесиком мыши (для ПК)
-        let zoomLevel = 1;
-        const board = document.querySelector('.board');
-        const boardContainer = document.querySelector('.board-container');
+<script>
+    let zoomLevel = 1;
+    const board = document.querySelector('.board');
+    const boardContainer = document.querySelector('.board-container');
 
-        // Масштабирование для мобильных устройств (щипок)
-        let initialDistance = 0;
-        let initialZoom = 1;
+    let initialDistance = 0;
+    let initialZoom = 1;
+    let initialX = 0, initialY = 0;
 
-        // Слушаем событие колесика мыши для масштабирования (ПК)
-        boardContainer.addEventListener('wheel', function (event) {
-            // Уменьшаем или увеличиваем масштаб с колесиком
-            if (event.deltaY > 0) {
-                zoomLevel -= 0.05;
-            } else {
-                zoomLevel += 0.05;
-            }
+    boardContainer.addEventListener('wheel', function (event) {
+        const rect = boardContainer.getBoundingClientRect();
+        const offsetX = event.clientX - rect.left;
+        const offsetY = event.clientY - rect.top;
 
-            // Ограничиваем минимальный и максимальный уровень масштаба
+        if (event.deltaY > 0) {
+            zoomLevel -= 0.05;
+        } else {
+            zoomLevel += 0.05;
+        }
+
+        zoomLevel = Math.min(Math.max(zoomLevel, 0.5), 2);
+
+        const scaleRatio = zoomLevel / initialZoom;
+        const newLeft = (board.offsetLeft - offsetX) * scaleRatio + offsetX;
+        const newTop = (board.offsetTop - offsetY) * scaleRatio + offsetY;
+
+        board.style.transform = `scale(${zoomLevel})`;
+        board.style.left = `${newLeft}px`;
+        board.style.top = `${newTop}px`;
+
+        initialZoom = zoomLevel;
+    });
+
+    boardContainer.addEventListener('touchstart', function (e) {
+        if (e.touches.length == 2) {
+            initialDistance = Math.hypot(
+                e.touches[0].pageX - e.touches[1].pageX,
+                e.touches[0].pageY - e.touches[1].pageY
+            );
+            initialZoom = zoomLevel;
+
+            initialX = (e.touches[0].pageX + e.touches[1].pageX) / 2;
+            initialY = (e.touches[0].pageY + e.touches[1].pageY) / 2;
+        }
+    });
+
+    boardContainer.addEventListener('touchmove', function (e) {
+        if (e.touches.length == 2) {
+            const newDistance = Math.hypot(
+                e.touches[0].pageX - e.touches[1].pageX,
+                e.touches[0].pageY - e.touches[1].pageY
+            );
+            const scaleFactor = newDistance / initialDistance;
+            zoomLevel = initialZoom * scaleFactor;
+
             zoomLevel = Math.min(Math.max(zoomLevel, 0.5), 2);
 
-            // Применяем масштаб
+            const centerX = (e.touches[0].pageX + e.touches[1].pageX) / 2;
+            const centerY = (e.touches[0].pageY + e.touches[1].pageY) / 2;
+
+            const scaleRatio = zoomLevel / initialZoom;
+            const offsetX = centerX - initialX;
+            const offsetY = centerY - initialY;
+
             board.style.transform = `scale(${zoomLevel})`;
-        });
+            board.style.left = `${board.offsetLeft + offsetX}px`;
+            board.style.top = `${board.offsetTop + offsetY}px`;
 
-        // Масштабирование для мобильных устройств с жестом "щипка"
-        boardContainer.addEventListener('touchstart', function (e) {
-            if (e.touches.length == 2) {
-                // Получаем расстояние между двумя пальцами
-                initialDistance = Math.hypot(
-                    e.touches[0].pageX - e.touches[1].pageX,
-                    e.touches[0].pageY - e.touches[1].pageY
-                );
-                initialZoom = zoomLevel;
-            }
-        });
+            initialX = centerX;
+            initialY = centerY;
+        }
+    });
 
-        boardContainer.addEventListener('touchmove', function (e) {
-            if (e.touches.length == 2) {
-                // Находим новое расстояние между пальцами
-                const newDistance = Math.hypot(
-                    e.touches[0].pageX - e.touches[1].pageX,
-                    e.touches[0].pageY - e.touches[1].pageY
-                );
-                const scaleFactor = newDistance / initialDistance;
-                zoomLevel = initialZoom * scaleFactor;
+    let isMouseDown = false;
+    let startX, startY;
 
-                // Ограничиваем масштаб
-                zoomLevel = Math.min(Math.max(zoomLevel, 0.5), 2);
+    boardContainer.addEventListener('mousedown', function (e) {
+        isMouseDown = true;
+        startX = e.pageX - board.offsetLeft;
+        startY = e.pageY - board.offsetTop;
+        boardContainer.style.cursor = 'grabbing';
+    });
 
-                // Применяем новый масштаб
-                board.style.transform = `scale(${zoomLevel})`;
-            }
-        });
+    boardContainer.addEventListener('mousemove', function (e) {
+        if (!isMouseDown) return;
+        const x = e.pageX - startX;
+        const y = e.pageY - startY;
+        board.style.left = `${x}px`;
+        board.style.top = `${y}px`;
+    });
 
-        // Перетаскивание доски для прокрутки
-        let isMouseDown = false;
-        let startX, startY;
+    boardContainer.addEventListener('mouseup', function () {
+        isMouseDown = false;
+        boardContainer.style.cursor = 'grab';
+    });
 
-        // Перетаскивание с помощью мыши (для ПК)
-        boardContainer.addEventListener('mousedown', function (e) {
-            isMouseDown = true;
-            startX = e.pageX - board.offsetLeft;
-            startY = e.pageY - board.offsetTop;
-            boardContainer.style.cursor = 'grabbing';
-        });
+    boardContainer.addEventListener('mouseleave', function () {
+        isMouseDown = false;
+        boardContainer.style.cursor = 'grab';
+    });
 
-        boardContainer.addEventListener('mousemove', function (e) {
-            if (!isMouseDown) return;
-            const x = e.pageX - startX;
-            const y = e.pageY - startY;
-            board.style.left = `${x}px`;
-            board.style.top = `${y}px`;
-        });
+    let isTouchMove = false;
+    let touchStartX, touchStartY;
 
-        boardContainer.addEventListener('mouseup', function () {
-            isMouseDown = false;
-            boardContainer.style.cursor = 'grab';
-        });
+    boardContainer.addEventListener('touchstart', function (e) {
+        if (e.touches.length === 1) {
+            isTouchMove = true;
+            touchStartX = e.touches[0].pageX - board.offsetLeft;
+            touchStartY = e.touches[0].pageY - board.offsetTop;
+        }
+    });
 
-        boardContainer.addEventListener('mouseleave', function () {
-            isMouseDown = false;
-            boardContainer.style.cursor = 'grab';
-        });
+    boardContainer.addEventListener('touchmove', function (e) {
+        if (!isTouchMove) return;
+        const x = e.touches[0].pageX - touchStartX;
+        const y = e.touches[0].pageY - touchStartY;
+        board.style.left = `${x}px`;
+        board.style.top = `${y}px`;
+    });
 
-        // Перетаскивание с помощью пальцев на мобильных устройствах
-        let isTouchMove = false;
-        let touchStartX, touchStartY;
+    boardContainer.addEventListener('touchend', function () {
+        isTouchMove = false;
+    });
 
-        boardContainer.addEventListener('touchstart', function (e) {
-            if (e.touches.length === 1) {
-                isTouchMove = true;
-                touchStartX = e.touches[0].pageX - board.offsetLeft;
-                touchStartY = e.touches[0].pageY - board.offsetTop;
-            }
-        });
-
-        boardContainer.addEventListener('touchmove', function (e) {
-            if (!isTouchMove) return;
-            const x = e.touches[0].pageX - touchStartX;
-            const y = e.touches[0].pageY - touchStartY;
-            board.style.left = `${x}px`;
-            board.style.top = `${y}px`;
-        });
-
-        boardContainer.addEventListener('touchend', function () {
-            isTouchMove = false;
-        });
-
-        boardContainer.addEventListener('touchcancel', function () {
-            isTouchMove = false;
-        });
-    </script>
+    boardContainer.addEventListener('touchcancel', function () {
+        isTouchMove = false;
+    });
+</script>
 
 </body>
 </html>

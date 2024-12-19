@@ -5,32 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Занимает весь экран</title>
     <style>
-        /* Сброс стилей */
+        /* Сброс стилей для body и html */
         body, html {
             margin: 0;
             padding: 0;
-            height: 100%;
-            background-color: #f4f4f4;
-            display: flex;
+            height: 100%; /* Заполняем весь экран */
+            width: 100%;  /* Заполняем всю ширину */
+            display: flex; /* Используем флекс-контейнер для центрирования */
             justify-content: center;
             align-items: center;
             font-family: Arial, sans-serif;
         }
 
-        /* Контейнер для iframe */
+        /* Контейнер, который занимает весь экран */
         .iframe-container {
-            width: 100%;
-            height: 100vh;  /* 100% высоты экрана */
+            width: 100%;  /* Заполняем всю ширину */
+            height: 100vh; /* Заполняем всю высоту экрана */
             display: flex;
             justify-content: center;
             align-items: center;
-            position: relative;
         }
 
+        /* iframe, которое заполняет контейнер */
         iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
+            width: 100%;   /* Заполняем всю ширину контейнера */
+            height: 100%;  /* Заполняем всю высоту контейнера */
+            border: none;  /* Убираем рамку */
         }
     </style>
 </head>

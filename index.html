@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Моя доска</title>
+    <title>Масштабируемая доска</title>
     <style>
         body, html {
             margin: 0;
@@ -17,7 +17,7 @@
             height: 100vh;
             overflow: hidden;
             position: relative;
-            touch-action: none; /* Отключаем встроенное масштабирование и прокрутку на мобильных */
+            touch-action: none; /* Отключаем встроенные жесты браузера */
         }
 
         .board {
@@ -26,7 +26,7 @@
             left: 0;
             width: 200%;
             height: 200%;
-            background-color: white;
+            background-color: #f0f0f0;
             transform-origin: center center;
             transition: transform 0.1s ease;
         }
@@ -46,13 +46,6 @@
             width: 200px;
             height: auto;
         }
-
-        @media (max-width: 600px) {
-            .content-item {
-                font-size: 18px;
-            }
-        }
-
     </style>
 </head>
 <body>
@@ -77,20 +70,25 @@
     let initialDistance = 0;
     let initialZoom = 1;
     let initialX = 0, initialY = 0;
+    let scaleOriginX = 0, scaleOriginY = 0;
 
+    // Для ПК (колесо мыши)
     boardContainer.addEventListener('wheel', function (event) {
+        event.preventDefault(); // Останавливаем прокрутку страницы
         const rect = boardContainer.getBoundingClientRect();
         const offsetX = event.clientX - rect.left;
         const offsetY = event.clientY - rect.top;
 
+        // Если событие колесика - фиксируем точку фокуса
         if (event.deltaY > 0) {
             zoomLevel -= 0.05;
         } else {
             zoomLevel += 0.05;
         }
 
-        zoomLevel = Math.min(Math.max(zoomLevel, 0.5), 2);
+        zoomLevel = Math.min(Math.max(zoomLevel, 0.5), 2); // Ограничиваем масштаб от 0.5 до 2
 
+        // Перемещение доски относительно фиксированной точки фокуса
         const scaleRatio = zoomLevel / initialZoom;
         const newLeft = (board.offsetLeft - offsetX) * scaleRatio + offsetX;
         const newTop = (board.offsetTop - offsetY) * scaleRatio + offsetY;
@@ -102,6 +100,7 @@
         initialZoom = zoomLevel;
     });
 
+    // Для мобильных устройств (жесты на экране)
     boardContainer.addEventListener('touchstart', function (e) {
         if (e.touches.length == 2) {
             initialDistance = Math.hypot(
@@ -112,6 +111,9 @@
 
             initialX = (e.touches[0].pageX + e.touches[1].pageX) / 2;
             initialY = (e.touches[0].pageY + e.touches[1].pageY) / 2;
+
+            scaleOriginX = initialX;
+            scaleOriginY = initialY;
         }
     });
 
@@ -124,24 +126,25 @@
             const scaleFactor = newDistance / initialDistance;
             zoomLevel = initialZoom * scaleFactor;
 
-            zoomLevel = Math.min(Math.max(zoomLevel, 0.5), 2);
+            zoomLevel = Math.min(Math.max(zoomLevel, 0.5), 2); // Ограничиваем масштаб от 0.5 до 2
 
             const centerX = (e.touches[0].pageX + e.touches[1].pageX) / 2;
             const centerY = (e.touches[0].pageY + e.touches[1].pageY) / 2;
 
             const scaleRatio = zoomLevel / initialZoom;
-            const offsetX = centerX - initialX;
-            const offsetY = centerY - initialY;
+            const offsetX = centerX - scaleOriginX;
+            const offsetY = centerY - scaleOriginY;
 
             board.style.transform = `scale(${zoomLevel})`;
             board.style.left = `${board.offsetLeft + offsetX}px`;
             board.style.top = `${board.offsetTop + offsetY}px`;
 
-            initialX = centerX;
-            initialY = centerY;
+            scaleOriginX = centerX;
+            scaleOriginY = centerY;
         }
     });
 
+    // Обработчик для перетаскивания доски на ПК
     let isMouseDown = false;
     let startX, startY;
 
@@ -170,6 +173,7 @@
         boardContainer.style.cursor = 'grab';
     });
 
+    // Обработчик для перетаскивания доски на мобильных устройствах
     let isTouchMove = false;
     let touchStartX, touchStartY;
 
@@ -196,6 +200,7 @@
     boardContainer.addEventListener('touchcancel', function () {
         isTouchMove = false;
     });
+
 </script>
 
 </body>
